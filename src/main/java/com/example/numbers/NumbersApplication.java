@@ -18,7 +18,7 @@ public class NumbersApplication {
 
 	@PostConstruct
 	void started() {
-		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		log.info("Started application in UTC timezone :" + ZonedDateTime.now());
+		TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+		log.info("Started application in IST timezone :" + ZonedDateTime.now());
 	}
 }
