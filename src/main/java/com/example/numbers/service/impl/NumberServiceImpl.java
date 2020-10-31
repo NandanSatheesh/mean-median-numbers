@@ -1,6 +1,7 @@
 package com.example.numbers.service.impl;
 
 import com.example.numbers.dto.response.MeanAndMedianResponseDto;
+import com.example.numbers.exception.NoElementInListException;
 import com.example.numbers.service.NumbersService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class NumberServiceImpl implements NumbersService {
 
-    private List<Integer> numberList =
+    private final List<Integer> numberList =
             Collections.synchronizedList(new LinkedList<>());
 
-    private AtomicInteger sum = new AtomicInteger(0);
+    private final AtomicInteger sum = new AtomicInteger(0);
 
     @Override
     public String addNumber(List<Integer> list) {
@@ -38,24 +39,29 @@ public class NumberServiceImpl implements NumbersService {
         double mean = 0.0f;
         double median = 0.0f;
         if (size == 0) {
-            log.info("the list is empty");
-            return MeanAndMedianResponseDto.builder()
-                    .mean(mean)
-                    .median(median)
-                    .build();
+            log.error("the list is empty: {}", numberList);
+            throw new NoElementInListException("The list is empty");
         }
-        mean = 1.0f * sum.get() / numberList.size();
-        if (numberList.size() % 2 == 0) {
-            median = (double) (numberList.get((size - 1) / 2)
-                    + numberList.get(size / 2)) / 2.0f;
-        } else {
-            median = numberList.get(size / 2);
-        }
+        mean = getMeanFromList();
+        median = getMedianFromList();
         log.info("computed mean: {}, median: {}", mean, median);
         return MeanAndMedianResponseDto.builder()
                 .mean(mean)
                 .median(median)
                 .build();
+    }
+
+    private double getMeanFromList() {
+        return 1.0f * sum.get() / numberList.size();
+    }
+
+    private double getMedianFromList() {
+        if (numberList.size() % 2 == 0) {
+            return (double) (numberList.get((numberList.size() - 1) / 2)
+                    + numberList.get(numberList.size() / 2)) / 2.0f;
+        } else {
+            return numberList.get(numberList.size() / 2);
+        }
     }
 
     private void addToList(int num) {
@@ -66,6 +72,10 @@ public class NumberServiceImpl implements NumbersService {
             index++;
         }
         log.info("adding item: {} to the position: {} in the list", num, index);
-        numberList.add(index, num);
+        if (numberList.size() == index) {
+            numberList.add(num);
+        } else {
+            numberList.add(index, num);
+        }
     }
 }
